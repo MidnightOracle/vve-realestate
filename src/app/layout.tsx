@@ -1,14 +1,16 @@
 import type { Metadata } from 'next'
-import { Inter, Playfair_Display } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/Navbar'
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
-const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair-display' })
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
-  title: 'Coastal Gateway Real Estate',
-  description: 'Luxury Real Estate Solutions',
+  title: 'Victoria Villano Real Estate',
+  description: 'Your trusted partner in real estate',
 }
 
 export default function RootLayout({
@@ -18,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${playfair.variable} font-sans`}>
+      <body className={`${inter.className} font-sans`}>
         <Navbar />
         {children}
       </body>
