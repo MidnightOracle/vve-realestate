@@ -2,11 +2,37 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useMemo } from 'react';
-import { properties } from '@/data/properties';
+import { useState, useMemo, useEffect } from 'react';
+import { properties as initialProperties } from '@/data/properties';
 import { BedIcon, BathIcon, RulerIcon } from '@/components/Icons';
 
 export default function ListingsContent() {
+  const [properties, setProperties] = useState(initialProperties);
+
+  useEffect(() => {
+    // Force a fresh load of the properties data
+    const loadProperties = async () => {
+      try {
+        // Add a timestamp to prevent caching
+        const response = await fetch('/data/properties.ts?' + new Date().getTime());
+        const text = await response.text();
+        // Extract the properties array from the text
+        const match = text.match(/export const properties = (\[[\s\S]*?\]);/);
+        if (match) {
+          const newProperties = eval(match[1]);
+          setProperties(newProperties);
+          console.log('Properties loaded:', newProperties);
+        }
+      } catch (error) {
+        console.error('Error loading properties:', error);
+        // Fallback to initial properties if loading fails
+        console.log('Using initial properties:', initialProperties);
+      }
+    };
+
+    loadProperties();
+  }, []);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     minPrice: '',
@@ -23,27 +49,25 @@ export default function ListingsContent() {
           property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
           property.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesPrice = (!filters.minPrice || parseFloat(property.price.replace(/[^0-9.]/g, '')) >= parseFloat(filters.minPrice)) &&
-          (!filters.maxPrice || parseFloat(property.price.replace(/[^0-9.]/g, '')) <= parseFloat(filters.maxPrice));
+        const matchesPrice = (!filters.minPrice || property.price >= parseFloat(filters.minPrice)) &&
+          (!filters.maxPrice || property.price <= parseFloat(filters.maxPrice));
 
         const matchesBeds = !filters.beds || property.beds >= parseInt(filters.beds);
-        const matchesBaths = !filters.baths || property.baths >= parseInt(filters.baths);
+        const totalBaths = property.fullBaths + (property.halfBaths ? 0.5 : 0);
+        const matchesBaths = !filters.baths || totalBaths >= parseInt(filters.baths);
 
         return matchesSearch && matchesPrice && matchesBeds && matchesBaths;
       })
       .sort((a, b) => {
-        const priceA = parseFloat(a.price.replace(/[^0-9.]/g, ''));
-        const priceB = parseFloat(b.price.replace(/[^0-9.]/g, ''));
-        
         switch (sortBy) {
           case 'price-asc':
-            return priceA - priceB;
+            return a.price - b.price;
           case 'price-desc':
-            return priceB - priceA;
+            return b.price - a.price;
           case 'beds':
             return b.beds - a.beds;
           case 'sqft':
-            return b.sqft - a.sqft;
+            return b.sqFt - a.sqFt;
           default:
             return 0;
         }
@@ -155,7 +179,7 @@ export default function ListingsContent() {
                 <div className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
                   <div className="relative aspect-[4/3]">
                     <Image
-                      src={property.image}
+                      src={property.images[0] || '/images/placeholder.jpg'}
                       alt={property.title}
                       fill
                       className="object-cover"
@@ -163,7 +187,7 @@ export default function ListingsContent() {
                   </div>
                   <div className="p-6">
                     <h3 className="text-2xl font-serif mb-2">{property.title}</h3>
-                    <p className="text-accent text-xl font-semibold mb-4">{property.price}</p>
+                    <p className="text-accent text-xl font-semibold mb-4">${property.price.toLocaleString()}</p>
                     <p className="text-gray-600 mb-4">{property.address}</p>
                     <div className="flex justify-between text-gray-600 mb-4">
                       <div className="flex items-center">
@@ -172,11 +196,11 @@ export default function ListingsContent() {
                       </div>
                       <div className="flex items-center">
                         <BathIcon className="h-5 w-5 mr-2" />
-                        <span>{property.baths} Baths</span>
+                        <span>{property.fullBaths + (property.halfBaths ? 0.5 : 0)} Baths</span>
                       </div>
                       <div className="flex items-center">
                         <RulerIcon className="h-5 w-5 mr-2" />
-                        <span>{property.sqft.toLocaleString()} Sq.Ft.</span>
+                        <span>{property.sqFt.toLocaleString()} Sq.Ft.</span>
                       </div>
                     </div>
                     <p className="text-gray-600 line-clamp-2">{property.description}</p>

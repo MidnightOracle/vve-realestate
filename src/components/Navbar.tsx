@@ -7,6 +7,7 @@ import Link from 'next/link';
 export default function Navbar() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -17,6 +18,7 @@ export default function Navbar() {
           setIsVisible(true);
         }
         setLastScrollY(window.scrollY);
+        setIsScrolled(window.scrollY > 50);
       }
     };
 
@@ -29,9 +31,9 @@ export default function Navbar() {
   }, [lastScrollY]);
 
   return (
-    <nav className={`fixed w-full bg-white/90 backdrop-blur-sm z-50 transition-transform duration-300 ${
+    <nav className={`fixed w-full z-50 transition-all duration-300 ${
       isVisible ? 'translate-y-0' : '-translate-y-full'
-    }`}>
+    } ${isScrolled ? 'bg-white/90 backdrop-blur-sm' : 'bg-transparent'}`}>
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <Link href="/" className="flex items-center">
           <Image
@@ -39,15 +41,15 @@ export default function Navbar() {
             alt="Victoria Villano Evans"
             width={180}
             height={50}
-            className="h-12 w-auto"
+            className={`h-12 w-auto ${isScrolled ? '' : 'invert brightness-0'}`}
           />
         </Link>
         <div className="hidden md:flex space-x-8">
-          <Link href="/" className="text-gray-700 hover:text-accent">Home</Link>
-          <Link href="/listings" className="text-gray-700 hover:text-accent">Listings</Link>
-          <Link href="/testimonials" className="text-gray-700 hover:text-accent">Testimonials</Link>
-          <Link href="/about" className="text-gray-700 hover:text-accent">About</Link>
-          <Link href="/contact" className="text-gray-700 hover:text-accent">Contact</Link>
+          <Link href="/" className={`${isScrolled ? 'text-gray-700' : 'text-white'} hover:text-accent transition-colors`}>Home</Link>
+          <Link href="/listings" className={`${isScrolled ? 'text-gray-700' : 'text-white'} hover:text-accent transition-colors`}>Listings</Link>
+          <Link href="/testimonials" className={`${isScrolled ? 'text-gray-700' : 'text-white'} hover:text-accent transition-colors`}>Testimonials</Link>
+          <Link href="/about" className={`${isScrolled ? 'text-gray-700' : 'text-white'} hover:text-accent transition-colors`}>About</Link>
+          <Link href="/contact" className={`${isScrolled ? 'text-gray-700' : 'text-white'} hover:text-accent transition-colors`}>Contact</Link>
         </div>
       </div>
     </nav>
